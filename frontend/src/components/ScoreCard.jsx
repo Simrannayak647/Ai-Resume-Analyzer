@@ -4,6 +4,21 @@ import { Target } from "lucide-react";
 function ScoreCard({ atsScore, getScoreColor, getScoreLabel, getScoreGradient }) {
   const ScoreBreakdown = ({ range, label, color, currentScore }) => {
     const isActive = currentScore >= range[0] && currentScore <= range[1];
+
+    const colorClasses = {
+      red: isActive ? "bg-red-50 border-2 border-red-200" : "bg-gray-50",
+      yellow: isActive ? "bg-yellow-50 border-2 border-yellow-200" : "bg-gray-50", 
+      blue: isActive ? "bg-blue-50 border-2 border-blue-200" : "bg-gray-50",
+      green: isActive ? "bg-green-50 border-2 border-green-200" : "bg-gray-50"
+    };
+    
+    const textColorClasses = {
+      red: "text-red-600",
+      yellow: "text-yellow-600",
+      blue: "text-blue-600", 
+      green: "text-green-600"
+    };
+    
     return (
       <div
         className={`text-center p-3 rounded-xl transition-all duration-300 ${

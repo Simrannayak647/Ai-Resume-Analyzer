@@ -1,9 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { ErrorBoundary } from 'react-error-boundary';
 import axios from "axios";
-import { pdfjs } from 'react-pdf';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
 
 // Components
 import UploadSection from './UploadSection';
@@ -11,15 +8,11 @@ import ScoreCard from './ScoreCard';
 import StatsCard from './StatsCard';
 import ContactInfo from './ContactInfo';
 import AnalysisTabs from './AnalysisTabs';
-import PdfPreview from './PdfPreview';
 import TipsSection from './TipsSection';
 import Footer from './Footer';
 
 // Utils
 import { getScoreColor, getScoreLabel, getScoreGradient } from '../utils/helper';
-
-// PDF worker - SIMPLE FIX
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
@@ -59,16 +52,7 @@ export default function UploadResume() {
   const [industry, setIndustry] = useState("technology");
   const [analysisTime, setAnalysisTime] = useState(null);
 
-  // PDF states
-  const [numPages, setNumPages] = useState(null);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [scale, setScale] = useState(1.0);
-  const [pdfUrl, setPdfUrl] = useState(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showPdfPreview, setShowPdfPreview] = useState(false);
-
   const fileInputRef = useRef(null);
-  const pdfContainerRef = useRef(null);
 
   const industries = [
     { id: "technology", label: "Technology" },
@@ -113,12 +97,6 @@ export default function UploadResume() {
       parsedData: {}
     });
     setAnalysisTime(null);
-    setShowPdfPreview(false);
-
-    if (pdfUrl) {
-      URL.revokeObjectURL(pdfUrl);
-      setPdfUrl(null);
-    }
   };
 
   // --- Submit resume ---
@@ -131,19 +109,13 @@ export default function UploadResume() {
   setLoading(true);
   setError("");
   setUploadProgress(0);
-  setShowPdfPreview(false);
   const startTime = Date.now();
-
-  if (pdfUrl) {
-    URL.revokeObjectURL(pdfUrl);
-    setPdfUrl(null);
-  }
 
   const formData = new FormData();
   formData.append("resume", file);
   formData.append("jobDescription", jobTitle || "");
 
-  console.log("📤 Sending to:", `${API_URL}/analyze`); // ✅ CORRECT: Log before API call
+  console.log("📤 Sending to:", `${API_URL}/analyze`);
 
   try {
     const res = await axios.post(`${API_URL}/analyze`, formData, {
@@ -156,43 +128,48 @@ export default function UploadResume() {
       },
     });
 
-    // ✅ CORRECT: Log AFTER getting response
     console.log("📥 Full Server Response:", JSON.stringify(res.data, null, 2));
     console.log("📊 Response data structure:", res.data);
 
     if (res.data.success) {
-      // Access data correctly - your backend returns res.data.data
-      const analysisData = res.data.data || {};
+      // ✅ CORRECT: Extract data from the ACTUAL response structure
+      const serverData = res.data;  // Fix typo: remove space after "res."
+      const parsedData = serverData.parsedData || {};
       
-      console.log("🔍 Analysis Data:", analysisData);
+      console.log("✅ Extracted data:", {
+        atsScore: serverData.atsScore,
+        strengths: serverData.strengths,
+        weaknesses: serverData.weaknesses,
+        parsedData: parsedData
+      });
 
-      setResumeData({
-        atsScore: analysisData.matchScore || 0,
-        strengths: analysisData.strengths || [],
-        weaknesses: analysisData.missingSkills || [],
+      // ✅ CORRECT: Create the new state object
+      const newResumeData = {
+        atsScore: serverData.atsScore || 0,  // Get from serverData, not parsedData
+        strengths: serverData.strengths || [],
+        weaknesses: serverData.weaknesses || [],
         missingKeywords: [],
         sections: [],
-        stats: {
-          wordCount: analysisData.text?.split(/\s+/).length || 0,
-          skillsFound: analysisData.strengths?.length || 0,
+        stats: serverData.stats || {
+          wordCount: parsedData.text?.split(/\s+/).length || 0,
+          skillsFound: serverData.strengths?.length || 0,
           sectionsFound: 0
         },
         parsedData: {
           contact: {},
-          ...analysisData
+          ...parsedData
         }
-      });
+      };
+
+      console.log("🔄 Setting resumeData to:", newResumeData);
+      
+      // Update state
+      setResumeData(newResumeData);
 
       setUploadProgress(100);
-
-      if (file.type === "application/pdf") {
-        const url = URL.createObjectURL(file);
-        setPdfUrl(url);
-        setShowPdfPreview(true);
-      }
-
       const endTime = Date.now();
       setAnalysisTime(((endTime - startTime) / 1000).toFixed(2));
+      
     } else {
       const errorMsg = res.data.error || "Analysis failed";
       setError(`Server error: ${errorMsg}`);
@@ -219,6 +196,7 @@ export default function UploadResume() {
   }
 };
 
+
   // --- Retry / Reset ---
   const handleRetry = () => {
     setFile(null);
@@ -232,8 +210,6 @@ export default function UploadResume() {
       parsedData: {}
     });
     setError("");
-    setShowPdfPreview(false);
-    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -247,28 +223,6 @@ export default function UploadResume() {
     element.click();
     document.body.removeChild(element);
   };
-
-  // --- PDF preview handlers ---
-  const onDocumentLoadSuccess = ({ numPages }) => setNumPages(numPages);
-  const onDocumentLoadError = (error) => console.error('PDF load error', error);
-  const changePage = (offset) => setPageNumber(prev => Math.max(1, Math.min(prev + offset, numPages || 1)));
-  const zoomIn = () => setScale(prev => Math.min(prev + 0.2, 3));
-  const zoomOut = () => setScale(prev => Math.max(prev - 0.2, 0.5));
-  const resetZoom = () => setScale(1.0);
-  const toggleFullscreen = () => {
-    if (!isFullscreen) {
-      const elem = pdfContainerRef.current;
-      elem?.requestFullscreen?.();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen?.();
-      setIsFullscreen(false);
-    }
-  };
-
-  useEffect(() => {
-    return () => pdfUrl && URL.revokeObjectURL(pdfUrl);
-  }, [pdfUrl]);
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
@@ -322,31 +276,20 @@ export default function UploadResume() {
                 <ContactInfo contactInfo={resumeData.parsedData.contact || {}} />
               )}
 
-              {showPdfPreview && pdfUrl && file?.type === "application/pdf" ? (
-                <PdfPreview
-                  pdfUrl={pdfUrl}
-                  pageNumber={pageNumber}
-                  numPages={numPages}
-                  scale={scale}
-                  isFullscreen={isFullscreen}
-                  onDocumentLoadSuccess={onDocumentLoadSuccess}
-                  onDocumentLoadError={onDocumentLoadError}
-                  changePage={changePage}
-                  zoomIn={zoomIn}
-                  zoomOut={zoomOut}
-                  resetZoom={resetZoom}
-                  toggleFullscreen={toggleFullscreen}
-                  setPageNumber={setPageNumber}
-                  pdfContainerRef={pdfContainerRef}
-                />
-              ) : (
-                <AnalysisTabs
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  resumeData={resumeData}
-                  downloadResumeText={downloadResumeText}
-                />
-              )}
+              <AnalysisTabs
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                resumeData={{
+    // Map your actual data structure to what AnalysisTabs expects
+    suggestions: resumeData.parsedData?.suggestions || [],
+    strengths: resumeData.strengths || [],
+    missingKeywords: resumeData.weaknesses || [], // Map weaknesses to missingKeywords
+    sections: resumeData.sections || [],
+    analysis: resumeData.parsedData?.summary || "No analysis text available",
+    contactInfo: resumeData.parsedData?.contact || {}
+  }}
+                downloadResumeText={downloadResumeText}
+              />
 
               <TipsSection strengths={resumeData.strengths} missingKeywords={resumeData.missingKeywords} />
             </div>
