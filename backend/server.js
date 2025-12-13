@@ -1,39 +1,49 @@
-import express from "express";
-import cors from "cors";
-import analyzerRoute from "./routes/analyzerRoute.cjs";
+// backend/server.js
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import analyzerRoutes from './routes/analyzerRoute.js';
 
+dotenv.config();
 
 const app = express();
-
-// CORS - allow all origins for testing
-app.use(cors());
+const PORT = process.env.PORT || 5000;
+// Add this after line 23 (after middleware, before routes):
+console.log('=== ROUTE DEBUG ===');
+console.log('Mounting analyzerRoutes at /api');
+console.log('Route file exists:', true);
+console.log('Routes in analyzerRoutes:');
+console.log('- POST /analyze');
+console.log('- GET /test');
+console.log('====================');
 
 // Middleware
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
 app.use(express.json());
-
-// Log all requests
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
-  next();
-});
+app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.get("/", (req, res) => {
-  res.json({ 
-    message: "AI Resume Analyzer API",
-    status: "Running"
+app.use('/api', analyzerRoutes);
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', service: 'resume-analyzer-api' });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    error: 'Something went wrong!',
+    message: err.message
   });
 });
 
-app.use("/analyze", analyzerRoute);
-
-// Error handling
-app.use((err, req, res, next) => {
-  console.error("Server error:", err);
-  res.status(500).json({ error: "Internal server error" });
-});
-
-const PORT = 5000;
+// Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });

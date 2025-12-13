@@ -12,6 +12,7 @@
     "pdfjs-dist": "^5.4.449",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
+    "react-error-boundary": "^6.0.0",
     "react-pdf": "^10.2.0",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
