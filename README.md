@@ -13,8 +13,7 @@ This project helps users upload resume data and instantly view structured insigh
 * Keyword frequency
 * Overall content analysis
 
-The system focuses on **frontend clarity + backend robustness**, avoiding unnecessary complexity. The earlier PDF parsing approach was intentionally removed to keep the architecture reliable and beginner‑friendly.
-
+The system focuses on **frontend clarity + backend robustness**, avoiding unnecessary complexity.
 ---
 
 ## 🧠 Key Features
@@ -84,8 +83,8 @@ Resume Upload → Text Extraction → Gemini Prompt → Structured JSON → Fron
 ---
 
 ### 📸 Screenshots
+![AI Resume Analyzer Dashboard](img.png)
 
-https://drive.google.com/file/d/1JjCdF4Nag7_zp1qdCC7_lM8PPzbhsteH/view?usp=sharing
 
 
 ---
@@ -93,6 +92,7 @@ https://drive.google.com/file/d/1JjCdF4Nag7_zp1qdCC7_lM8PPzbhsteH/view?usp=shari
 ## 🎥 Project Demo Video
 
 ▶️ **Watch the full working demo here:**
+
 
 https://drive.google.com/file/d/1vme3lILkBWEvSbThg2eZr7wuUFKlGgzQ/view?usp=sharing
 
