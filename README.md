@@ -101,7 +101,7 @@ https://drive.google.com/file/d/1vme3lILkBWEvSbThg2eZr7wuUFKlGgzQ/view?usp=shari
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/your-repo-name.git
+git clone https://github.com/Simrannayak647/Ai-Resume-Analyzer.git
 ```
 
 ### 2️⃣ Backend Setup
@@ -109,7 +109,7 @@ git clone https://github.com/your-username/your-repo-name.git
 ```bash
 cd backend
 npm install
-npm start
+node server.js
 ```
 
 ### 3️⃣ Frontend Setup
@@ -117,7 +117,7 @@ npm start
 ```bash
 cd frontend
 npm install
-npm run dev
+npm start
 ```
 
 ---
