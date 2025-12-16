@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import {
   FileText, AlertCircle, CheckCircle, Star, Layout,
-  Copy, Download
+  Copy, Download, Code, Users, Briefcase, GraduationCap,
+  Wrench, Award, Cpu, User, MessageSquare
 } from "lucide-react";
-import { Users, Briefcase, GraduationCap, Wrench, Award, Cpu } from "lucide-react";
 
 function AnalysisTabs({
   activeTab,
@@ -13,30 +13,22 @@ function AnalysisTabs({
 }) {
   const [copied, setCopied] = useState(false);
 
-  // ✅ CORRECT: Extract data from the RIGHT structure
-  // Your resumeData comes from UploadResume with specific mapping
+  // Safe data extraction
   const safeData = {
-    // Use the props passed from UploadResume
     suggestions: resumeData.suggestions || [],
     strengths: resumeData.strengths || [],
     missingKeywords: resumeData.missingKeywords || [],
     analysis: resumeData.analysis || "No analysis available yet.",
-    contactInfo: resumeData.contactInfo || {}
+    skills: resumeData.skills || { technical: [], soft: [], missing: [] },
+    sections: resumeData.sections || {}
   };
-
-  console.log("📋 AnalysisTabs received data:", {
-    suggestionsCount: safeData.suggestions.length,
-    strengthsCount: safeData.strengths.length,
-    missingKeywordsCount: safeData.missingKeywords.length,
-    analysisLength: safeData.analysis.length,
-    contactInfo: safeData.contactInfo
-  });
 
   const tabs = [
     { id: "analysis", label: "Summary", icon: FileText },
-    { id: "suggestions", label: "Suggestions", icon: AlertCircle, count: safeData.suggestions.length },
     { id: "strengths", label: "Strengths", icon: CheckCircle, count: safeData.strengths.length },
-    { id: "keywords", label: "Areas to Improve", icon: Star, count: safeData.missingKeywords.length },
+    { id: "weaknesses", label: "Areas to Improve", icon: AlertCircle, count: safeData.missingKeywords.length },
+    { id: "suggestions", label: "Suggestions", icon: Star, count: safeData.suggestions.length },
+    { id: "skills", label: "Skills Analysis", icon: Code },
     { id: "sections", label: "Sections", icon: Layout }
   ];
 
@@ -46,22 +38,23 @@ function AnalysisTabs({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Better section detection - checks actual analysis text
-  const sections = [
-    { name: "Contact Information", icon: Users, found: /email|phone|contact|@|\.com|\.in/i.test(safeData.analysis) },
-    { name: "Professional Summary", icon: FileText, found: /summary|profile|objective|about/i.test(safeData.analysis) },
-    { name: "Work Experience", icon: Briefcase, found: /experience|work|employment|internship|job/i.test(safeData.analysis) },
-    { name: "Education", icon: GraduationCap, found: /education|degree|university|college|school|bachelor|master/i.test(safeData.analysis) },
-    { name: "Skills", icon: Wrench, found: /skill|technical|proficiency|programming|framework|language/i.test(safeData.analysis) },
-    { name: "Projects", icon: Cpu, found: /project|portfolio|github|repository|developed|built/i.test(safeData.analysis) },
-    { name: "Achievements", icon: Award, found: /achievement|award|certification|certified|honor/i.test(safeData.analysis) }
+  // Section configuration with icons
+  const sectionConfig = [
+    { key: "contactInfo", name: "Contact Information", icon: User },
+    { key: "summary", name: "Professional Summary", icon: FileText },
+    { key: "experience", name: "Work Experience", icon: Briefcase },
+    { key: "education", name: "Education", icon: GraduationCap },
+    { key: "skills", name: "Skills", icon: Wrench },
+    { key: "projects", name: "Projects", icon: Cpu },
+    { key: "certifications", name: "Certifications", icon: Award },
+    { key: "achievements", name: "Achievements", icon: Star }
   ];
 
   return (
     <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
       {/* TABS HEADER */}
       <div className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 px-6">
-        <div className="flex overflow-x-auto py-2">
+        <div className="flex overflow-x-auto py-2 scrollbar-hide">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -74,7 +67,7 @@ function AnalysisTabs({
             >
               <tab.icon className="w-4 h-4 mr-2" />
               {tab.label}
-              {tab.count > 0 && (
+              {tab.count !== undefined && tab.count > 0 && (
                 <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
                   activeTab === tab.id 
                     ? "bg-white text-blue-600" 
@@ -96,10 +89,10 @@ function AnalysisTabs({
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">
-                  AI Analysis Summary
+                  AI Resume Analysis Summary
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">
-                  Summary generated by Gemini AI based on your resume
+                  Comprehensive analysis powered by Gemini AI
                 </p>
               </div>
 
@@ -109,7 +102,7 @@ function AnalysisTabs({
                   className="flex items-center px-3 py-2 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors duration-300"
                 >
                   <Copy className="w-4 h-4 mr-2" />
-                  {copied ? "Copied!" : "Copy Text"}
+                  {copied ? "Copied!" : "Copy"}
                 </button>
 
                 <button
@@ -117,19 +110,17 @@ function AnalysisTabs({
                   className="flex items-center px-3 py-2 text-sm bg-green-50 hover:bg-green-100 text-green-700 rounded-lg transition-colors duration-300"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Download JSON
+                  Download
                 </button>
               </div>
             </div>
 
-            {/* SUMMARY CONTENT */}
-            <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
-              <p className="text-gray-700 whitespace-pre-line">
+            <div className="mt-4 p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border border-blue-200">
+              <p className="text-gray-800 leading-relaxed whitespace-pre-line">
                 {safeData.analysis}
               </p>
             </div>
 
-            {/* TEXT COUNTS */}
             <div className="mt-4 text-sm text-gray-500 flex items-center">
               <FileText className="w-4 h-4 mr-2" />
               <span>{safeData.analysis.length} characters</span>
@@ -139,33 +130,7 @@ function AnalysisTabs({
           </div>
         )}
 
-        {/* TAB 2 — SUGGESTIONS */}
-        {activeTab === "suggestions" && (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">
-              Recommendations for Improvement ({safeData.suggestions.length})
-            </h3>
-
-            {safeData.suggestions.length > 0 ? (
-              safeData.suggestions.map((suggestion, i) => (
-                <div
-                  key={i}
-                  className="flex items-start p-4 bg-yellow-50 border border-yellow-200 rounded-xl mb-3"
-                >
-                  <AlertCircle className="w-5 h-5 text-yellow-700 mr-3 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-700">{suggestion}</p>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <AlertCircle className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                <p>No suggestions available. Try analyzing a different resume.</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* TAB 3 — STRENGTHS */}
+        {/* TAB 2 — STRENGTHS */}
         {activeTab === "strengths" && (
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-6">
@@ -173,11 +138,11 @@ function AnalysisTabs({
             </h3>
 
             {safeData.strengths.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-4">
                 {safeData.strengths.map((strength, i) => (
                   <div
                     key={i}
-                    className="flex items-start p-4 bg-green-50 border border-green-200 rounded-xl"
+                    className="flex items-start p-4 bg-green-50 border-l-4 border-green-500 rounded-lg hover:shadow-md transition-shadow"
                   >
                     <CheckCircle className="w-5 h-5 text-green-700 mr-3 flex-shrink-0 mt-0.5" />
                     <p className="text-gray-700">{strength}</p>
@@ -185,79 +150,206 @@ function AnalysisTabs({
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <CheckCircle className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                <p>No strengths detected in this resume.</p>
+              <div className="text-center py-12 text-gray-500">
+                <CheckCircle className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                <p className="text-lg">No strengths detected</p>
+                <p className="text-sm mt-2">Upload a resume to see analysis</p>
               </div>
             )}
           </div>
         )}
 
-        {/* TAB 4 — AREAS TO IMPROVE */}
-        {activeTab === "keywords" && (
+        {/* TAB 3 — AREAS TO IMPROVE */}
+        {activeTab === "weaknesses" && (
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-6">
               Areas to Improve ({safeData.missingKeywords.length})
             </h3>
 
             {safeData.missingKeywords.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {safeData.missingKeywords.map((keyword, i) => (
+              <div className="grid grid-cols-1 gap-4">
+                {safeData.missingKeywords.map((weakness, i) => (
                   <div
                     key={i}
-                    className="flex items-center p-4 bg-red-50 border border-red-200 rounded-xl"
+                    className="flex items-start p-4 bg-red-50 border-l-4 border-red-500 rounded-lg hover:shadow-md transition-shadow"
                   >
-                    <Star className="w-5 h-5 text-red-600 mr-3" />
-                    <span className="text-gray-700">{keyword}</span>
+                    <AlertCircle className="w-5 h-5 text-red-600 mr-3 flex-shrink-0 mt-0.5" />
+                    <p className="text-gray-700">{weakness}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-green-500">
-                <CheckCircle className="w-12 h-12 mx-auto text-green-300 mb-3" />
-                <p className="font-medium">Great! No major areas need improvement.</p>
+              <div className="text-center py-12 text-green-500">
+                <CheckCircle className="w-16 h-16 mx-auto text-green-400 mb-4" />
+                <p className="text-lg font-medium">Excellent! No major issues found</p>
+                <p className="text-sm mt-2 text-gray-500">Your resume looks well-optimized</p>
               </div>
             )}
           </div>
         )}
 
-        {/* TAB 5 — SECTIONS */}
+        {/* TAB 4 — SUGGESTIONS */}
+        {activeTab === "suggestions" && (
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">
+              Actionable Suggestions ({safeData.suggestions.length})
+            </h3>
+
+            {safeData.suggestions.length > 0 ? (
+              <div className="space-y-4">
+                {safeData.suggestions.map((suggestion, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-lg hover:shadow-md transition-shadow"
+                  >
+                    <Star className="w-5 h-5 text-yellow-700 mr-3 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-gray-700 font-medium">Suggestion {i + 1}</p>
+                      <p className="text-gray-600 mt-1">{suggestion}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <Star className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                <p className="text-lg">No suggestions available</p>
+                <p className="text-sm mt-2">Try analyzing a resume first</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 5 — SKILLS ANALYSIS */}
+        {activeTab === "skills" && (
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">
+              Skills Breakdown
+            </h3>
+
+            <div className="space-y-6">
+              {/* Technical Skills */}
+              <div>
+                <div className="flex items-center mb-3">
+                  <Code className="w-5 h-5 text-blue-600 mr-2" />
+                  <h4 className="text-md font-semibold text-gray-800">
+                    Technical Skills ({safeData.skills.technical.length})
+                  </h4>
+                </div>
+                {safeData.skills.technical.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {safeData.skills.technical.map((skill, i) => (
+                      <span
+                        key={i}
+                        className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium border border-blue-300"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No technical skills detected</p>
+                )}
+              </div>
+
+              {/* Soft Skills */}
+              <div>
+                <div className="flex items-center mb-3">
+                  <Users className="w-5 h-5 text-green-600 mr-2" />
+                  <h4 className="text-md font-semibold text-gray-800">
+                    Soft Skills ({safeData.skills.soft.length})
+                  </h4>
+                </div>
+                {safeData.skills.soft.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {safeData.skills.soft.map((skill, i) => (
+                      <span
+                        key={i}
+                        className="px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium border border-green-300"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No soft skills detected</p>
+                )}
+              </div>
+
+              {/* Missing Skills */}
+              <div>
+                <div className="flex items-center mb-3">
+                  <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
+                  <h4 className="text-md font-semibold text-gray-800">
+                    Skills to Add ({safeData.skills.missing.length})
+                  </h4>
+                </div>
+                {safeData.skills.missing.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {safeData.skills.missing.map((skill, i) => (
+                      <span
+                        key={i}
+                        className="px-4 py-2 bg-red-100 text-red-800 rounded-full text-sm font-medium border border-red-300"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-green-600 text-sm font-medium">No missing skills - great job!</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 6 — SECTIONS */}
         {activeTab === "sections" && (
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-6">
-              Resume Sections Detected
+              Resume Sections Analysis
             </h3>
-            <p className="text-gray-600 mb-6 text-sm">
-              Based on analysis of: "{safeData.analysis.substring(0, 100)}..."
-            </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {sections.map((section, i) => (
-                <div
-                  key={i}
-                  className={`flex items-center p-4 rounded-xl border ${
-                    section.found
-                      ? "bg-green-50 border-green-300"
-                      : "bg-gray-50 border-gray-200"
-                  }`}
-                >
-                  <section.icon className={`w-5 h-5 mr-3 ${
-                    section.found ? "text-green-600" : "text-gray-400"
-                  }`} />
-                  <div>
-                    <p className={`font-medium ${
-                      section.found ? "text-gray-900" : "text-gray-500"
-                    }`}>
-                      {section.name}
-                    </p>
-                    <p className={`text-sm ${
-                      section.found ? "text-green-600" : "text-gray-400"
-                    }`}>
-                      {section.found ? "✓ Detected in text" : "✗ Not detected"}
-                    </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {sectionConfig.map((section) => {
+                const isFound = safeData.sections[section.key] === true;
+                return (
+                  <div
+                    key={section.key}
+                    className={`flex items-center p-4 rounded-xl border-2 transition-all ${
+                      isFound
+                        ? "bg-green-50 border-green-300 hover:shadow-lg"
+                        : "bg-gray-50 border-gray-200 opacity-60"
+                    }`}
+                  >
+                    <section.icon className={`w-6 h-6 mr-3 ${
+                      isFound ? "text-green-600" : "text-gray-400"
+                    }`} />
+                    <div className="flex-1">
+                      <p className={`font-medium ${
+                        isFound ? "text-gray-900" : "text-gray-500"
+                      }`}>
+                        {section.name}
+                      </p>
+                      <p className={`text-sm ${
+                        isFound ? "text-green-600" : "text-gray-400"
+                      }`}>
+                        {isFound ? "✓ Present" : "✗ Missing"}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
+            </div>
+
+            {/* Summary */}
+            <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <p className="text-sm text-gray-700">
+                <span className="font-semibold">
+                  {Object.values(safeData.sections).filter(Boolean).length} of {sectionConfig.length}
+                </span>{" "}
+                sections detected in your resume
+              </p>
             </div>
           </div>
         )}

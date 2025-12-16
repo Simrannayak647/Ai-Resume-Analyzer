@@ -1,49 +1,75 @@
-// backend/server.js
+// backend/server.js (or index.js or app.js)
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import analyzerRoutes from './routes/analyzerRoute.js';
+import analyzerRoute from './routes/analyzerRoute.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-// Add this after line 23 (after middleware, before routes):
-console.log('=== ROUTE DEBUG ===');
-console.log('Mounting analyzerRoutes at /api');
-console.log('Route file exists:', true);
-console.log('Routes in analyzerRoutes:');
-console.log('- POST /analyze');
-console.log('- GET /test');
-console.log('====================');
 
 // Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
-}));
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
-app.use('/api', analyzerRoutes);
+// Logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'resume-analyzer-api' });
+// Routes
+app.use('/api', analyzerRoute);
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Resume Analyzer API',
+    version: '1.0.0',
+    endpoints: {
+      test: '/api/test',
+      testGemini: '/api/test-gemini',
+      analyze: '/api/analyze (POST)'
+    }
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  console.log('❌ 404 - Route not found:', req.method, req.path);
+  res.status(404).json({
+    error: 'Route not found',
+    method: req.method,
+    path: req.path,
+    availableRoutes: [
+      'GET /',
+      'GET /api/test',
+      'GET /api/test-gemini',
+      'POST /api/analyze'
+    ]
+  });
 });
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('❌ Server error:', err);
   res.status(500).json({
-    success: false,
-    error: 'Something went wrong!',
+    error: 'Internal server error',
     message: err.message
   });
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log('\n🚀 ===================================');
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🌐 API URL: http://localhost:${PORT}`);
+  console.log(`📝 Test endpoint: http://localhost:${PORT}/api/test`);
+  console.log(`🤖 Gemini test: http://localhost:${PORT}/api/test-gemini`);
+  console.log(`📤 Upload endpoint: http://localhost:${PORT}/api/analyze`);
+  console.log('===================================\n');
 });
+
+export default app;

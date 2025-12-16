@@ -4,9 +4,6 @@ import { BarChart3, Hash, Cpu, Users, Zap, Layout } from "lucide-react";
 function StatsCard({ stats }) {
   const statItems = [
     { icon: Hash, label: "Word Count", value: stats.wordCount || 0, color: "blue" },
-    { icon: Cpu, label: "Technical Keywords", value: stats.techKeywordsFound || 0, color: "green" },
-    { icon: Users, label: "Soft Skills", value: stats.softSkillsFound || 0, color: "yellow" },
-    { icon: Zap, label: "Action Verbs", value: stats.actionVerbsFound || 0, color: "purple" },
     { icon: Layout, label: "Sections Found", value: `${stats.sectionsFound || 0}/${stats.totalSections || 4}`, color: "indigo" }
   ];
 

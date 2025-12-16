@@ -40,7 +40,8 @@ export default function UploadResume() {
     strengths: [],
     weaknesses: [],
     missingKeywords: [],
-    sections: [],
+    skills: { technical: [], soft: [], missing: [] },
+    sections: {},
     stats: {},
     parsedData: {}
   });
@@ -92,136 +93,143 @@ export default function UploadResume() {
       strengths: [],
       weaknesses: [],
       missingKeywords: [],
-      sections: [],
+      skills: { technical: [], soft: [], missing: [] },
+      sections: {},
       stats: {},
       parsedData: {}
     });
     setAnalysisTime(null);
   };
 
-  // --- Submit resume ---
+  /* ---------------- Submit Resume ---------------- */
   const handleSubmit = async () => {
-  if (!file) {
-    setError("Select a file first");
-    return;
-  }
+    if (!file) {
+      setError("Select a file first");
+      return;
+    }
 
-  setLoading(true);
-  setError("");
-  setUploadProgress(0);
-  const startTime = Date.now();
+    setLoading(true);
+    setError("");
+    setUploadProgress(0);
+    const startTime = Date.now();
 
-  const formData = new FormData();
-  formData.append("resume", file);
-  formData.append("jobDescription", jobTitle || "");
+    const formData = new FormData();
+    formData.append("resume", file);
+    formData.append("jobDescription", jobTitle || "");
 
-  console.log("📤 Sending to:", `${API_URL}/analyze`);
-
-  try {
-    const res = await axios.post(`${API_URL}/analyze`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-      onUploadProgress: (progressEvent) => {
-        const percentCompleted = Math.round(
-          (progressEvent.loaded * 100) / (progressEvent.total || 100)
-        );
-        setUploadProgress(percentCompleted);
-      },
-    });
-
-    console.log("📥 Full Server Response:", JSON.stringify(res.data, null, 2));
-    console.log("📊 Response data structure:", res.data);
-
-    if (res.data.success) {
-      // ✅ CORRECT: Extract data from the ACTUAL response structure
-      const serverData = res.data;  // Fix typo: remove space after "res."
-      const parsedData = serverData.parsedData || {};
-      
-      console.log("✅ Extracted data:", {
-        atsScore: serverData.atsScore,
-        strengths: serverData.strengths,
-        weaknesses: serverData.weaknesses,
-        parsedData: parsedData
+    try {
+      const res = await axios.post(`${API_URL}/analyze`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (e) => {
+          setUploadProgress(
+            Math.round((e.loaded * 100) / (e.total || 100))
+          );
+        }
       });
 
-      // ✅ CORRECT: Create the new state object
-      const newResumeData = {
-        atsScore: serverData.atsScore || 0,  // Get from serverData, not parsedData
-        strengths: serverData.strengths || [],
-        weaknesses: serverData.weaknesses || [],
-        missingKeywords: [],
-        sections: [],
-        stats: serverData.stats || {
-          wordCount: parsedData.text?.split(/\s+/).length || 0,
-          skillsFound: serverData.strengths?.length || 0,
-          sectionsFound: 0
-        },
-        parsedData: {
-          contact: {},
-          ...parsedData
-        }
-      };
+      if (res.data.success) {
+        const serverData = res.data;
 
-      console.log("🔄 Setting resumeData to:", newResumeData);
-      
-      // Update state
-      setResumeData(newResumeData);
+        console.log('📥 Received data from server:', {
+          atsScore: serverData.atsScore,
+          strengthsCount: serverData.strengths?.length,
+          weaknessesCount: serverData.weaknesses?.length,
+          skillsData: serverData.skills
+        });
 
-      setUploadProgress(100);
-      const endTime = Date.now();
-      setAnalysisTime(((endTime - startTime) / 1000).toFixed(2));
-      
-    } else {
-      const errorMsg = res.data.error || "Analysis failed";
-      setError(`Server error: ${errorMsg}`);
-      console.error("Server error response:", res.data);
+        // ✅ Map server response to component state
+        const newResumeData = {
+          atsScore: serverData.atsScore ?? null,
+          strengths: serverData.strengths || [],
+          weaknesses: serverData.weaknesses || [],
+          missingKeywords: serverData.missingKeywords || [],
+          
+          // Skills breakdown
+          skills: {
+            technical: serverData.skills?.technical || [],
+            soft: serverData.skills?.soft || [],
+            missing: serverData.skills?.missing || []
+          },
+          
+          // Sections detected
+          sections: serverData.sections || {},
+          
+          // Statistics
+          stats: serverData.stats || {},
+          
+          // Parsed data (summary, recommendation, suggestions)
+          parsedData: {
+            summary: serverData.parsedData?.summary || "",
+            recommendation: serverData.parsedData?.recommendation || "",
+            suggestions: serverData.parsedData?.suggestions || []
+          }
+        };
+
+        setResumeData(newResumeData);
+        setUploadProgress(100);
+
+        const endTime = Date.now();
+        setAnalysisTime(
+          ((endTime - startTime) / 1000).toFixed(2)
+        );
+
+        console.log('✅ Resume data updated successfully');
+      } else {
+        setError(res.data.error || "Analysis failed");
+      }
+    } catch (err) {
+      console.error('❌ Analysis error:', err);
+      setError(
+        err.response?.data?.error ||
+          "Server error. Please try again."
+      );
+    } finally {
+      setLoading(false);
+      setTimeout(() => setUploadProgress(0), 2000);
     }
-  } catch (err) {
-    console.error("❌ Upload error:", err);
-    
-    let errorMessage = "Failed to analyze resume";
-    if (err.response) {
-      errorMessage = err.response.data?.error || 
-                    err.response.data?.message || 
-                    `Server error (${err.response.status})`;
-    } else if (err.request) {
-      errorMessage = "No response from server. Check your connection.";
-    } else {
-      errorMessage = err.message;
-    }
-    
-    setError(errorMessage);
-  } finally {
-    setLoading(false);
-    setTimeout(() => setUploadProgress(0), 2000);
-  }
-};
+  };
 
-
-  // --- Retry / Reset ---
+  /* ---------------- Retry ---------------- */
   const handleRetry = () => {
     setFile(null);
+    setError("");
     setResumeData({
       atsScore: null,
       strengths: [],
       weaknesses: [],
       missingKeywords: [],
-      sections: [],
+      skills: { technical: [], soft: [], missing: [] },
+      sections: {},
       stats: {},
       parsedData: {}
     });
-    setError("");
+    setAnalysisTime(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // --- Download analyzed resume text ---
+  /* ---------------- Download Analysis ---------------- */
   const downloadResumeText = () => {
-    const element = document.createElement("a");
-    const fileBlob = new Blob([JSON.stringify(resumeData.parsedData, null, 2)], { type: 'application/json' });
-    element.href = URL.createObjectURL(fileBlob);
-    element.download = "resume_analysis.json";
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    const analysisData = {
+      atsScore: resumeData.atsScore,
+      summary: resumeData.parsedData.summary,
+      recommendation: resumeData.parsedData.recommendation,
+      strengths: resumeData.strengths,
+      areasToImprove: resumeData.weaknesses,
+      suggestions: resumeData.parsedData.suggestions,
+      skills: resumeData.skills,
+      sections: resumeData.sections,
+      stats: resumeData.stats,
+      analyzedAt: new Date().toISOString()
+    };
+
+    const blob = new Blob(
+      [JSON.stringify(analysisData, null, 2)],
+      { type: "application/json" }
+    );
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `resume_analysis_${Date.now()}.json`;
+    a.click();
   };
 
   return (
@@ -233,7 +241,9 @@ export default function UploadResume() {
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
               AI Resume Analyzer
             </h1>
-            <p className="text-gray-600">Get ATS score, strengths, weaknesses, missing keywords, and section-wise analysis.</p>
+            <p className="text-gray-600">
+              Get comprehensive ATS score, skills analysis, strengths, weaknesses, and actionable suggestions
+            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -280,18 +290,20 @@ export default function UploadResume() {
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 resumeData={{
-    // Map your actual data structure to what AnalysisTabs expects
-    suggestions: resumeData.parsedData?.suggestions || [],
-    strengths: resumeData.strengths || [],
-    missingKeywords: resumeData.weaknesses || [], // Map weaknesses to missingKeywords
-    sections: resumeData.sections || [],
-    analysis: resumeData.parsedData?.summary || "No analysis text available",
-    contactInfo: resumeData.parsedData?.contact || {}
-  }}
+                  strengths: resumeData.strengths,
+                  missingKeywords: resumeData.missingKeywords,
+                  suggestions: resumeData.parsedData.suggestions || [],
+                  analysis: resumeData.parsedData.summary || "No summary available",
+                  skills: resumeData.skills,
+                  sections: resumeData.sections
+                }}
                 downloadResumeText={downloadResumeText}
               />
 
-              <TipsSection strengths={resumeData.strengths} missingKeywords={resumeData.missingKeywords} />
+              <TipsSection 
+                strengths={resumeData.strengths} 
+                missingKeywords={resumeData.missingKeywords} 
+              />
             </div>
           </div>
 
