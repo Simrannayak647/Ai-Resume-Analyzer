@@ -1,60 +1,73 @@
-# 📊 AI Resume Analyzer 
+---
 
-> A clean, practical, end‑to‑end web application that analyzes resume content, extracts meaningful insights, and presents them through an intuitive dashboard. Built with modern web technologies, optimized for clarity, performance, and real‑world usability.
+# 📊 AI Resume Analyzer
+
+A smart web application that analyzes resumes and provides clear, actionable feedback to help candidates improve their chances of passing ATS (Applicant Tracking Systems).
+
+This project combines frontend validation, backend processing, and AI-powered analysis into one complete system.
 
 ---
 
-## 🚀 Project Overview
+## 🚀 Why This Project?
 
-This project helps users upload resume data and instantly view structured insights such as:
+Many students and freshers are unsure whether their resume is ATS-friendly.
 
-* Skill counts
-* Technical vs non‑technical skill distribution
-* Keyword frequency
-* Overall content analysis
+This project solves that problem by providing:
 
-The system focuses on **frontend clarity + backend robustness**, avoiding unnecessary complexity.
----
+* ✅ ATS Score (out of 100)
+* 💪 Resume Strengths
+* ⚠️ Areas to Improve
+* 🧠 Technical & Soft Skills Detected
+* 🔍 Missing Keywords
+* 💡 Practical Improvement Suggestions
 
-## 🧠 Key Features
-
-* 📁 Resume upload (PDF / DOCX / TXT)
-* 🧠 AI-powered resume understanding using **Gemini AI API**
-* 📊 ATS score calculation
-* 🧩 Skills extraction & categorization (technical / non-technical)
-* 💪 Strengths & ⚠️ areas of improvement detection
-* 💡 Actionable, role-based suggestions
-* 📈 Clean dashboard with tab-wise insights
-* 🎥 Screen-recorded demo support
+All displayed in a clean, easy-to-understand dashboard.
 
 ---
 
-## 🤖 Gemini AI API – How It’s Used
+## 🧩 How It Works
 
-This project leverages **Google Gemini AI** as the core intelligence layer.
-
-### What Gemini Does Here
-
-* Parses resume content contextually (not just keyword matching)
-* Identifies:
-
-  * Skills
-  * Strengths
-  * Weaknesses
-  * ATS relevance
-* Generates structured insights in a format usable by the frontend
-
-### Why Gemini (Real Reason)
-
-* More reliable than rule-based parsing
-* Better contextual understanding than traditional NLP
-* Industry-grade AI suitable for real ATS-style analysis
-
-### Backend Flow (High Level)
-
-```text
-Resume Upload → Text Extraction → Gemini Prompt → Structured JSON → Frontend UI
 ```
+Upload Resume → Extract Text → Send to Gemini AI → Receive JSON Analysis → Display Dashboard
+```
+
+### Step-by-Step Flow
+
+1. User uploads resume (PDF).
+2. Frontend validates file type and size.
+3. Backend receives file using Multer.
+4. Text is extracted from PDF using pdf-parse.
+5. Extracted text is sent to Google Gemini API with a structured prompt.
+6. Gemini returns analysis in structured JSON format.
+7. Backend formats the response and deletes the temporary file.
+8. Frontend displays ATS score, skills, strengths, weaknesses, and suggestions.
+
+---
+
+## 🤖 Gemini AI Integration
+
+This project uses **Google Gemini** as the intelligence layer.
+
+* API key is stored securely using environment variables (.env).
+* Backend initializes the Gemini model.
+* Resume text + optional job description is sent with a structured prompt.
+* Gemini returns structured JSON output.
+* Backend validates and sends clean response to frontend.
+
+Model used: `gemini-2.5-flash-lite` (free tier friendly).
+
+---
+
+## ✨ Key Features
+
+* 📁 Resume upload with size/type validation
+* 🎯 ATS score calculation
+* 🧠 Skill extraction (Technical + Soft Skills)
+* ⚠️ Weakness detection & missing keywords
+* 💡 Actionable suggestions
+* 📊 Clean tab-based dashboard
+* ⬇️ Download analysis as JSON
+* 🔄 Health check & Gemini connection test endpoints
 
 ---
 
@@ -62,70 +75,107 @@ Resume Upload → Text Extraction → Gemini Prompt → Structured JSON → Fron
 
 ### Frontend
 
-* **React.js** – Component‑based UI
-* **Tailwind CSS** – Clean, responsive styling
-* **Lucide Icons** – Lightweight icon set
-* **Recharts** – Data visualization (charts & graphs)
+* ⚛️ React.js
+* 🎨 Tailwind CSS
+* 🔗 Axios
+* 🎯 Lucide React Icons
 
 ### Backend
 
-* **Node.js** – Runtime environment
-* **Express.js** – REST API framework
-* **Multer** – File handling (non‑PDF)
-* **Gemini API** – Text analysis & AI insights
-
-### Tools & Utilities
-
-* **Postman** – API testing
-* **VS Code** – Development environment
-* **Git & GitHub** – Version control
+* 🟢 Node.js
+* 🚏 Express.js
+* 📤 Multer (file upload handling)
+* 📖 pdf-parse (PDF text extraction)
+* 🤖 @google/generative-ai (Gemini integration)
 
 ---
 
-### 📸 Screenshots
-![AI Resume Analyzer Dashboard](img.png)
+## 🔌 API Endpoints
 
-
+| Method | Endpoint           | Description             |
+| ------ | ------------------ | ----------------------- |
+| POST   | `/api/analyze`     | Analyze uploaded resume |
+| GET    | `/api/test`        | API health check        |
+| GET    | `/api/test-gemini` | Test Gemini connection  |
 
 ---
 
-## 🎥 Project Demo Video
+## ⚙️ Local Setup
 
-▶️ **Watch the full working demo here:**
-
-
-https://drive.google.com/file/d/1vme3lILkBWEvSbThg2eZr7wuUFKlGgzQ/view?usp=sharing
-
-## ⚙️ How to Run the Project
-
-### 1️⃣ Clone the Repository
+### 1️⃣ Clone Repository
 
 ```bash
 git clone https://github.com/Simrannayak647/Ai-Resume-Analyzer.git
+cd Ai-Resume-Analyzer
 ```
+
+---
 
 ### 2️⃣ Backend Setup
 
 ```bash
 cd backend
 npm install
-node server.js
 ```
+
+Create a `.env` file inside backend folder:
+
+```
+GEMINI_API_KEY=your_gemini_api_key_here
+PORT=5000
+```
+
+Run backend:
+
+```bash
+npm start
+```
+
+---
 
 ### 3️⃣ Frontend Setup
 
 ```bash
-cd frontend
+cd ../frontend
 npm install
 npm start
 ```
 
 ---
-## 🧪 API Highlights
 
-* `POST /analyze` – Sends resume text and returns analyzed insights
-* `GET /stats` – Returns computed skill statistics
+## 🧪 How to Test
+
+1. Open the frontend app.
+2. Upload a resume (PDF).
+3. Click **Analyze Resume**.
+4. View ATS score, skills, strengths, weaknesses, and suggestions.
+
 ---
 
+## 📸 Screenshot
 
-**Built with discipline, curiosity, and zero fluff.**
+![AI Resume Analyzer Dashboard](img.png)
+
+---
+
+## 🎥 Demo Video
+
+Watch demo here:
+[https://drive.google.com/file/d/1vme3lILkBWEvSbThg2eZr7wuUFKlGgzQ/view?usp=sharing](https://drive.google.com/file/d/1vme3lILkBWEvSbThg2eZr7wuUFKlGgzQ/view?usp=sharing)
+
+---
+
+## 🧠 What I Learned
+
+* Full-stack integration (React + Node/Express)
+* File upload handling using Multer
+* PDF text extraction and processing
+* AI API integration with structured prompts
+* JSON response handling
+* Error handling and fallback design
+* Secure API key management
+
+---
+🙌 Built with discipline, curiosity, and zero fluff.
+
+---
